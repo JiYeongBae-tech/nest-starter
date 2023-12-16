@@ -43,11 +43,12 @@ export class LocalSerializer extends PassportSerializer{
         Logger.warn('===========> deserializeUser ' , userId)
 
         try {
-            const userd= await this.userRepository.findOneOrFail(
-                {id: userId,}, {select: ['id', 'email', 'name', 'age']});
+            // const userd= await this.userRepository.findOneOrFail({id : userId});
+                // {id: userId,}, {select: ['id', 'email', 'name', 'age']});
 
-            console.log('=========> userd : ' , userd)
-            done(null ,userd)
+
+            // console.log('=========> userd : ' , userd)
+            // done(null ,userd)
         } catch (error){
             done(error)
         }
