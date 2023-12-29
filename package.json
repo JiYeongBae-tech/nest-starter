@@ -7,19 +7,14 @@
   "license": "UNLICENSED",
   "scripts": {
     "start:dev": "nest build --webpack --webpackPath webpack-hmr.config.js --watch",
-
-
-    "start": "npm-run-all nest:start postbuild",
+    "start": "nest start",
     "nest:start": "nest start",
     "postbuild": "cp -r static dist/static",
-
-
     "watch": "npm-run-all --parallel nodemon:start nest:start",
     "nodemon:start": "nodemon server",
     "build": "nest build --config tsconfig.build.json",
     "copy-files": "cp package.json tsconfig.json webpack-hmr.config.js dist/",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
     "start:dev-old": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
@@ -43,6 +38,7 @@
     "@nestjs/typeorm": "^10.0.1",
     "@nestjs/websockets": "^10.3.0",
     "@types/bcrypt": "^5.0.2",
+    "async-mutex": "^0.4.0",
     "axios": "^1.6.2",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
@@ -57,7 +53,8 @@
     "socket-controllers": "^0.2.0",
     "swagger-ui-express": "^5.0.0",
     "typeorm": "^0.3.17",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
