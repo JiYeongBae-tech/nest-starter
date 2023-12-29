@@ -34,7 +34,7 @@
             /* 누군가 채팅침 */
             socket.on(room, (data) => {
                 console.log('====== 누군가의  채팅 ======' )
-                $('#chatList').append(`<div>
+                $('#chatList').append(`<div class="chatid-${data[2]}">
                           <div>${data[0]} : ${data[1]} : ${data[2]}</div>
                          <button
                          style="border: 2px solid red"
@@ -49,16 +49,48 @@
             socket.on('comeOn' + room, (comeOn) => {
                 $('#chatList').append(`<div style="color:blue;">${comeOn}</div>`);
             });
+
+            /* 누군가 좋아요 누름  */
+            socket.on('likes' + room, (data) => {
+                console.log('=====likes' , data)
+                if( nickname !== data[1]){
+                    console.log('====다른 사람이 좋아요 누름 !! ')
+                    updateLikeVal(data[2])
+                }else {
+                    console.log('====내가 좋아요 누름 그래서 업데이트 안해도됨 이미 했음!! ')
+                }
+
+                /**
+                 * 소켓으로 서로 하트 수를 보내기
+                 * 본인이 하트를 누르면 socket emit 하고,
+                 * 본인은 혹시 보낸 소켓이 응답이 안올수도있으니 자바스크립트로 업데이트하고
+                 * 다시 소켓으로 받았을때 , 본인이 보낸건 +1 안하기
+                 * 근데 ,소켓으로 보낸것중 1명은 누락되고 1명은 받았으면, 둘중 뭐를 디비에 저장할지.. 그래서 소켓으로 받은 값은
+                 * 바로 디비에 저장해야되는데
+                 * */
+
+            });
+
         });
 
-        /** like click count*/
+        /**좋아요 클릭*/
         function handleButtonClick (chatuuid){
             console.log('======handle button click ' , chatuuid)
-            socket.emit('likeClick' , room, chatuuid  , 3  )
+            updateLikeVal(chatuuid)
+            socket.emit('likeClick' , room, nickname , chatuuid  , 1 ) //좋아요 누를때 마다 1씩 소켓으로 보냄
+        }
+        /** UI 좋아요+1 */
+        function updateLikeVal(chatuuid){
+            const elements= `.chatid-${chatuuid} p.clickCount`;
+            var newValue = parseInt($(elements).text().trim()) +1;
+            console.log( `==========elements : ${elements} ` )
+            console.log( $(`.chat-id${chatuuid} p.clickCount`).text().trim() )
+            console.log(  `======== newValue : ${ newValue } `)
+            $(elements).text(newValue); // 본인 채팅방에 값 +1 하기
         }
 
+        /** 메시지 전송 */
         function msg_send() {
-            /* 메시지 전송 */
             let message = $('#msg').val();
             socket.emit('send', room, nickname, message);
             console.log( `------msg send---------${room} : ${nickname} : ${message}----`  )

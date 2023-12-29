@@ -102,7 +102,12 @@ export class ChatGateway implements OnGatewayInit{
   @SubscribeMessage('likeClick')
   handleClickEvent( @MessageBody() data: string,
                     @ConnectedSocket() socket: Socket,){
-    const [ room, chatuuid ,clickNum ] = data;
+    const [ room, nickname, chatuuid ,clickNum ] = data;
+
+    this.server.emit('likes' + room, data);
+
+    /** database에 저장하기 */
+    //saveToDatabase()
 
     this.logger.log(`======Received click event from ${socket.id},
        채팅방 id : ${room} , 
