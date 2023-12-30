@@ -39,6 +39,7 @@ import {HttpModule, HttpService} from "@nestjs/axios";
 import { ChatGateway } from './chat/chat.gateway';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { ChatModule } from './chat/chat.module';
 
 
 //데코레이터 @Module
@@ -56,11 +57,13 @@ import { join } from 'path';
       HttpModule,
       SurveyModule,
       UsersModule,
+    ChatModule,
     TypeOrmModule.forRoot(ormconfig),
     TypeOrmModule.forFeature([User ,SurveyKeyType , SurveyTemplate , SurveyKeyTypeUnit , SurveyKey]),
+
   ],
   controllers: [AppController, UsersController, SurveyController], // 여느 프렘웍과 같이 http 요청 라우터 엔드포인트
-  providers: [AppService, UsersService, AuthService, SurveyService , CommonHelper, ChatGateway ], // 모듈에 필요한 provider 캡슐화되어사용. 다른 모듈에서 사용하고싶을때는  export
+  providers: [AppService, UsersService, AuthService, SurveyService , CommonHelper ], // 모듈에 필요한 provider 캡슐화되어사용. 다른 모듈에서 사용하고싶을때는  export
   exports: [CommonHelper], // 다른 모듈에서도 사용할 수 있도록 export
 })
 export class AppModule {}

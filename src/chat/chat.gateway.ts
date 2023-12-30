@@ -7,9 +7,8 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import {Logger} from "@nestjs/common";
+import {ChatService} from "./chat.service";
 import * as util from 'util';
-// uuid 모듈을 가져옵니다.
-const { v4: uuidv4 } = require('uuid');
 
 @WebSocketGateway(8081,{
   namespace: 'chat' ,
@@ -19,8 +18,8 @@ const { v4: uuidv4 } = require('uuid');
 })
 export class ChatGateway implements OnGatewayInit{
   private logger = new Logger('chat')
-  constructor() {
-    this.logger.log('========constructor')
+  constructor(private readonly chatService : ChatService) {
+    this.logger.log('======== chat.gateway constructor')
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
@@ -54,49 +53,35 @@ export class ChatGateway implements OnGatewayInit{
   }
 
 
-  /** 동일한 채팅방에 메시지 날리기*/
-  private broadcast(event, client, message: any) {
-    this.logger.log(`========= 방 이름 : ${event} : 메세지 보낸 사람과 메시지 내용 , 메세지고유uuid : ${message}`)
-    this.logger.log(`========= 메세지를 보낸 방 고유 id : ${client.id} `)
-
-    // 객체 배열 전체를 출력
-    // console.log(util.inspect(this.server.sockets, { depth: 1 }));
-
-    const socketList = this.server.sockets; //소켓에 연결된 전체 소켓객체 맵배열
-    if (socketList instanceof Map) {
-      for (let id of socketList.keys()) {
-        if (id !== client.id) {
-          /**
-           * 매개변수로 받은 client 의 방 고유id 값과 for문 도는 소켓객체의 방고유id 값을 비교해서 동일하면 같은 채팅방이니 emit 날리기
-           * */
-          // this.logger.log(`>> id ${id} ` )
-          // this.logger.log(`>> client.id  ${client.id} ` )
-          // this.logger.log(`>> client   ${client} ` )
-          // this.logger.log('-')
-          socketList.get(id).emit(event, message);
-        }else {
-        }
-      }
-    } else {
-      this.logger.error('socketList is not a Map.');
-    }
-  }
-
-
   @SubscribeMessage('send')
-  handleNewUser(
+  handleChatMsg(
       @MessageBody() data: string,
       @ConnectedSocket() socket: Socket,
   ) {
     const [room, nickname, message] = data;
+    const msguuid = this.chatService.generateUUID();
 
-    // UUID 생성
-    const msguuid = uuidv4();
-
-    this.logger.log(`[START MSG] 메세지를 보낸 방 고유 id  ${socket.id}  / 채팅메시지의 고유uuid : ${msguuid} /  방이름 보낸사람 메시지 : ${data}`);
-    this.broadcast(room, socket, [nickname, message , msguuid]);
+    this.logger.log(`[START MSG] 메세지를 보낸 방 고유 id  ${socket.id}  / 채팅메시지의 고유uuid : ${msguuid}
+     /  방이름 보낸사람 메시지 : ${data}`);
+    this.chatService.broadcast(room, socket, [nickname, message , msguuid] , this.server);
     return 'hello world';
   }
+
+  @SubscribeMessage('sendGiftBox')
+  handleChatGiftMsg(
+      @MessageBody() data: string,
+      @ConnectedSocket() socket: Socket,
+  ) {
+    const [room, nickname, message] = data;
+    const msguuid = this.chatService.generateUUID();
+
+    this.logger.log(`[START sendGiftBox] 메세지를 보낸 방 고유 id  ${socket.id}  / 채팅메시지의 고유uuid : ${msguuid}
+     /  방이름 보낸사람 메시지 : ${data}`);
+    this.chatService.broadcastGiftBox(room, socket, [nickname, message , msguuid] , this.server);
+    return 'hello world';
+  }
+
+
 
 
   @SubscribeMessage('likeClick')
@@ -107,7 +92,6 @@ export class ChatGateway implements OnGatewayInit{
     this.server.emit('likes' + room, data);
 
     /** database에 저장하기 */
-    //saveToDatabase()
 
     this.logger.log(`======Received click event from ${socket.id},
        채팅방 id : ${room} , 

@@ -31,26 +31,23 @@
         socket.emit('hihi', nickname, room);
 
         socket.on('connect', () => {
-            /* 누군가 채팅침 */
+            /** 누군가 채팅침 */
             socket.on(room, (data) => {
-                console.log('====== 누군가의  채팅 ======' )
-                $('#chatList').append(`<div class="chatid-${data[2]}">
-                          <div>${data[0]} : ${data[1]} : ${data[2]}</div>
-                         <button
-                         style="border: 2px solid red"
-                         class="likebtn"
-                         id="${data[2]}"
-                         onclick="handleButtonClick(this.id)">Like</button>
-                          <p class="clickCount">0</p>
-                          </div>`)
-
+                appendChatMsg(data);
             });
-            /* 누군가 입장 */
+
+            /** 누군가 입장 */
             socket.on('comeOn' + room, (comeOn) => {
                 $('#chatList').append(`<div style="color:blue;">${comeOn}</div>`);
             });
 
-            /* 누군가 좋아요 누름  */
+            /** 누군가 선물하기 함 */
+            socket.on(room + '-giftBox', (data) => {
+                console.log('======== 선물받기 채팅메세지')
+                appendGiftChat(data);
+            });
+
+            /** 누군가 좋아요 누름  */
             socket.on('likes' + room, (data) => {
                 console.log('=====likes' , data)
                 if( nickname !== data[1]){
@@ -73,12 +70,72 @@
 
         });
 
+        /** 자신의 메세지 추가 */
+        function appendOwnMsg(message){
+            $('#chatList').append(`<div style="color:red;">나 : ${message}</div>`);
+
+        }
+
+        /** 채팅 메세지 추가*/
+        async function appendChatMsg(data)
+        {
+            $('#chatList').append(`<div class="chatid-${data[2]}">
+                          <div>${data[0]} : ${data[1]} : ${data[2]}</div>
+                         <button
+                         style="border: 2px solid red"
+                         class="likebtn"
+                         id="${data[2]}"
+                         onclick="handleButtonClick(this.id)">Like</button>
+                          <p class="clickCount">0</p>
+                          </div>`)
+        }
+
+        /** 자신의 선물 메세지 추가 */
+        function appendOwnChatMsg(){
+            $('#chatList').append(`<div style="border: 3px solid olivedrab">
+            <div>선물도착 선착순 1명!</div>
+            <img src="../image/giftbox.png" style="width: 50px ; height: 50px ; ">
+            </div>`);
+        }
+
+        /** 선물받기 메세지를 채팅에 추가 */
+        async function appendGiftChat(data){
+            $('#chatList').append(`<div style="border: 3px solid olivedrab">
+              <div>${data[0]} : ${data[2]}</div>
+            <div>선물도착 선착순 1명!</div>
+            <img src="../image/giftbox.png" style="width: 50px ; height: 50px ; ">
+            <button  onclick="clickGift()">선물받기</button>
+            </div>`);
+        }
+
+
+
+        /** 선물받기 클릭이벤트*/
+        async function clickGift() {
+            /** 할일! 여기서 클릭 한 아이템의 uuid 가져와서 바디에 담아서 보낸다
+             * uuid 별로 뮤텍스 분리하기 ,,, 근데 mutex 변수 하나로 컨트롤하는거라..흠...  */
+            console.log(JSON.stringify({nickname}))
+            const response = await fetch('/chat/givegift', {
+                method: 'post',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({nickname}),
+            });
+            const result = await response.text();
+            console.log(result);
+        }
+
+
+
         /**좋아요 클릭*/
         function handleButtonClick (chatuuid){
             console.log('======handle button click ' , chatuuid)
             updateLikeVal(chatuuid)
             socket.emit('likeClick' , room, nickname , chatuuid  , 1 ) //좋아요 누를때 마다 1씩 소켓으로 보냄
         }
+
+
         /** UI 좋아요+1 */
         function updateLikeVal(chatuuid){
             const elements= `.chatid-${chatuuid} p.clickCount`;
@@ -89,37 +146,49 @@
             $(elements).text(newValue); // 본인 채팅방에 값 +1 하기
         }
 
+
+
+        /**
+         * =========================== 전송 emit 시작  ====================================
+         */
+
         /** 메시지 전송 */
-        function msg_send() {
+        function sendMsg() {
             let message = $('#msg').val();
             socket.emit('send', room, nickname, message);
-            console.log( `------msg send---------${room} : ${nickname} : ${message}----`  )
             $('#msg').val('');
-            $('#chatList').append(`<div style="color:red;">나 : ${message}</div>`);
+            console.log( `------msg send---------${room} : ${nickname} : ${message}----`  )
+            appendOwnMsg(message)
         }
+
+
+        /** 선물하기 메세지 전송*/
+        async function sendGiftMsg() {
+            socket.emit('sendGiftBox', room, nickname, 'giftBox');
+            console.log(`------sendGiftMsg 선물하기 ---------${room} : ${nickname} ----`)
+            appendOwnChatMsg()
+        }
+
+        /**
+         * =========================== 전송 emit 끝  ====================================
+         */
+
+
+
+
+
 
         $(document).ready(() => {
             $('#room').text(`${room}`);
         });
     </script>
 
-    <script>
-        async function giveGift() {
-            // 여기에서 NestJS 서버로 API 호출을 통해 선물 처리를 요청할 수 있습니다.
-            console.log( JSON.stringify({ nickname }) )
-            const response = await fetch('/givegift', {
-                method: 'post',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ nickname  }),
-            });
-            const result = await response.text();
-            console.log(result);
-        }
-    </script>
 
 </head>
+
+
+
+
 <body>
 <h1>채팅방<span id="room" style="font-size: large"></span></h1>
 
@@ -129,10 +198,10 @@
     <input
             type="text"
             id="msg"
-            onKeyPress="if( event.keyCode==13 ){msg_send();}"
+            onKeyPress="if( event.keyCode==13 ){sendMsg();}"
     />
-    <button  onclick="giveGift()">Give Gift</button>
-    <button onclick="msg_send()">제출</button>
+    <button  onclick="sendGiftMsg()">선물하기</button>
+    <button onclick="sendMsg()">제출</button>
 </div>
 </body>
 </html>
