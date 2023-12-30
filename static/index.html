@@ -102,6 +102,23 @@
             $('#room').text(`${room}`);
         });
     </script>
+
+    <script>
+        async function giveGift() {
+            // 여기에서 NestJS 서버로 API 호출을 통해 선물 처리를 요청할 수 있습니다.
+            console.log( JSON.stringify({ nickname }) )
+            const response = await fetch('/givegift', {
+                method: 'post',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ nickname  }),
+            });
+            const result = await response.text();
+            console.log(result);
+        }
+    </script>
+
 </head>
 <body>
 <h1>채팅방<span id="room" style="font-size: large"></span></h1>
@@ -114,6 +131,7 @@
             id="msg"
             onKeyPress="if( event.keyCode==13 ){msg_send();}"
     />
+    <button  onclick="giveGift()">Give Gift</button>
     <button onclick="msg_send()">제출</button>
 </div>
 </body>
