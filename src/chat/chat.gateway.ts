@@ -59,11 +59,11 @@ export class ChatGateway implements OnGatewayInit{
       @ConnectedSocket() socket: Socket,
   ) {
     const [room, nickname, message] = data;
-    const msguuid = this.chatService.generateUUID();
+    const msgUUID = this.chatService.generateUUID();
 
-    this.logger.log(`[START MSG] 메세지를 보낸 방 고유 id  ${socket.id}  / 채팅메시지의 고유uuid : ${msguuid}
+    this.logger.log(`[START MSG] 메세지를 보낸 방 고유 id  ${socket.id}  / 채팅메시지의 고유uuid : ${msgUUID}
      /  방이름 보낸사람 메시지 : ${data}`);
-    this.chatService.broadcast(room, socket, [nickname, message , msguuid] , this.server);
+    this.chatService.broadcast(room, socket, [nickname, message , msgUUID] , this.server);
     return 'hello world';
   }
 
@@ -73,11 +73,11 @@ export class ChatGateway implements OnGatewayInit{
       @ConnectedSocket() socket: Socket,
   ) {
     const [room, nickname, message] = data;
-    const msguuid = this.chatService.generateUUID();
+    const msgUUID = this.chatService.generateUUID();
 
-    this.logger.log(`[START sendGiftBox] 메세지를 보낸 방 고유 id  ${socket.id}  / 채팅메시지의 고유uuid : ${msguuid}
+    this.logger.log(`[START sendGiftBox] 메세지를 보낸 방 고유 id  ${socket.id}  / 채팅메시지의 고유uuid : ${msgUUID}
      /  방이름 보낸사람 메시지 : ${data}`);
-    this.chatService.broadcastGiftBox(room, socket, [nickname, message , msguuid] , this.server);
+    this.chatService.broadcastGiftBox(room, socket, [nickname, message , msgUUID] , this.server);
     return 'hello world';
   }
 

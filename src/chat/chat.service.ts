@@ -1,29 +1,46 @@
 import {Injectable, Logger} from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { Server, Socket } from 'socket.io';
+import { Cron, CronExpression } from '@nestjs/schedule';
+
 @Injectable()
 export class ChatService {
 
     private readonly logger = new Logger(ChatService.name);
     constructor() {}
 
+    private userMutexMap : Map<string , boolean> = new Map();
 
-    private mutex = false;
     /** 선물받기 눌렀을때 뮤텍스 처리 */
-    async processGift() {
+    async processGift(msgUUID) {
         // uuid 모듈을 가져옵니다.
         const { v4: uuidv4 } = require('uuid');
 
-        console.log(`============mutex : ${this.mutex} `)
-        const msguuid = uuidv4();
-        if (!this.mutex) {
-            this.mutex = true;
+        // console.log(util.inspect(this.server.sockets, { depth: 1 }));
+
+        for (const [key, value] of this.userMutexMap.entries()) {
+            console.log(`Key: ${key}, Value: ${value}`);
+        }
+
+
+        if(!this.userMutexMap.has(msgUUID) )
+            this.logger.log(`============${msgUUID} 는 최초 스레드 비어있음 : ${ this.userMutexMap.get(msgUUID) } `)
+        else if(!this.userMutexMap.get(msgUUID) )
+            this.logger.log(`============${msgUUID} 는 스레드 비어있음 : ${ this.userMutexMap.get(msgUUID) } `)
+        else if(this.userMutexMap.get(msgUUID) )
+            Logger.warn(`============${msgUUID}  는 스레드 이미 사용중 : ${ this.userMutexMap.get(msgUUID) } `)
+
+
+        if (!this.userMutexMap.has(msgUUID) || !this.userMutexMap.get(msgUUID)) {
+            this.userMutexMap.set(msgUUID, true);
+
             // 여기에서 실제 선물 처리 로직을 수행
-            this.logger.log(`스레드 차지성공. 5초동안 작업시작!... ${msguuid}`);
+            this.logger.log(`스레드 차지성공. 5초동안 작업시작!... ${msgUUID}`);
             await new Promise((resolve) => setTimeout(resolve, 10000)); // 예시로 5초 동안 처리 중이라 가정
-            this.mutex = false;
+
+            this.userMutexMap.set(msgUUID, false);
         } else {
-            this.logger.log(`기다리기. 누군가 이미 스레드 차지함... ${msguuid}`);
+            this.logger.log(`기다리기. 누군가 이미 스레드 차지함... ${msgUUID}`);
             // 다른 사용자가 선물 처리 중일 때의 처리 로직 추가
         }
     }

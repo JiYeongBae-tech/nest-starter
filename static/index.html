@@ -43,7 +43,8 @@
 
             /** 누군가 선물하기 함 */
             socket.on(room + '-giftBox', (data) => {
-                console.log('======== 선물받기 채팅메세지')
+                console.log('======== 선물받기 채팅메세지 ')
+                console.log(data)
                 appendGiftChat(data);
             });
 
@@ -104,27 +105,36 @@
               <div>${data[0]} : ${data[2]}</div>
             <div>선물도착 선착순 1명!</div>
             <img src="../image/giftbox.png" style="width: 50px ; height: 50px ; ">
-            <button  onclick="clickGift()">선물받기</button>
+            <button  onclick="clickGift('${data[0]}', '${data[1]}' , '${data[2]}')">선물받기</button>
             </div>`);
         }
 
 
 
-        /** 선물받기 클릭이벤트*/
-        async function clickGift() {
-            /** 할일! 여기서 클릭 한 아이템의 uuid 가져와서 바디에 담아서 보낸다
-             * uuid 별로 뮤텍스 분리하기 ,,, 근데 mutex 변수 하나로 컨트롤하는거라..흠...  */
-            console.log(JSON.stringify({nickname}))
-            const response = await fetch('/chat/givegift', {
-                method: 'post',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({nickname}),
-            });
-            const result = await response.text();
-            console.log(result);
+
+        // 클릭 이벤트 핸들러를 포함한 클래스
+        class GiftHandler {
+            /** 선물받기 클릭이벤트*/
+
+            async clickGift( userName, message, msgUUID ) {
+                console.log(JSON.stringify({nickname ,userName ,message ,msgUUID }))
+                console.log(msgUUID)
+                const response = await fetch('/chat/givegift', {
+                    method: 'post',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({nickname ,userName ,message ,msgUUID }),
+                });
+                const result = await response.text();
+                console.log(result);
+            }
         }
+
+        // 사용 예시
+        const giftHandler = new GiftHandler();
+        // 클릭 이벤트 핸들러 등록
+        window.clickGift = giftHandler.clickGift.bind(giftHandler);
 
 
 
